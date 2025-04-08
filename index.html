@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Public Banking System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      width: 350px;
+      text-align: center;
+      animation: fadeIn 1.5s ease;
+      transition: transform 0.3s ease;
+    }
+    .container:hover {
+      transform: scale(1.02);
+    }
+    h2 {
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+      color: #f1c40f;
+      animation: slideDown 1s ease;
+    }
+    input, button, select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    input, select {
+      background: #ecf0f1;
+      color: #2c3e50;
+    }
+    input:focus, select:focus {
+      outline: 2px solid #f1c40f;
+    }
+    button {
+      background: #27ae60;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e8449;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .balance {
+      margin: 1rem 0;
+      font-size: 1.5rem;
+      background: #34495e;
+      padding: 10px;
+      border-radius: 10px;
+      animation: fadeIn 2s ease;
+    }
+    .log {
+      background: #2c3e50;
+      margin-top: 15px;
+      padding: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+    .log p {
+      margin: 5px 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🏦 Public Bank Portal</h2>
+    <select id="userSelect">
+      <option value="">-- Select User --</option>
+    </select>
+    <input type="text" id="newUser" placeholder="New User Name" />
+    <button onclick="createUser()">Create User</button>
+
+    <div class="balance">Balance: ₹<span id="balance">0</span></div>
+    <input type="number" id="amount" placeholder="Enter amount" />
+    <button onclick="deposit()">Deposit</button>
+    <button onclick="withdraw()">Withdraw</button>
+
+    <div class="log" id="transactionLog"></div>
+  </div>
+
+  <script>
+    let users = JSON.parse(localStorage.getItem('users')) || {};
+    let currentUser = '';
+
+    function updateUserSelect() {
+      const userSelect = document.getElementById('userSelect');
+      userSelect.innerHTML = '<option value="">-- Select User --</option>';
+      Object.keys(users).forEach(user => {
+        const option = document.createElement('option');
+        option.value = user;
+        option.innerText = user;
+        userSelect.appendChild(option);
+      });
+    }
+
+    function createUser() {
+      const newUser = document.getElementById('newUser').value.trim();
+      if (newUser && !users[newUser]) {
+        users[newUser] = { balance: 0, transactions: [] };
+        localStorage.setItem('users', JSON.stringify(users));
+        updateUserSelect();
+        document.getElementById('newUser').value = '';
+        alert('User created!');
+      } else {
+        alert('Invalid or duplicate user.');
+      }
+    }
+
+    document.getElementById('userSelect').addEventListener('change', function () {
+      currentUser = this.value;
+      if (currentUser) {
+        updateUI();
+      } else {
+        document.getElementById('balance').innerText = '0';
+        document.getElementById('transactionLog').innerHTML = '';
+      }
+    });
+
+    function updateUI() {
+      if (!currentUser) return;
+      document.getElementById('balance').innerText = users[currentUser].balance.toFixed(2);
+      const log = users[currentUser].transactions.map(tx => `<p>${tx}</p>`).join('');
+      document.getElementById('transactionLog').innerHTML = log;
+    }
+
+    function updateStorage() {
+      localStorage.setItem('users', JSON.stringify(users));
+      updateUI();
+    }
+
+    function deposit() {
+      const amount = parseFloat(document.getElementById('amount').value);
+      if (!currentUser) return alert('Select a user first.');
+      if (!isNaN(amount) && amount > 0) {
+        users[currentUser].balance += amount;
+        users[currentUser].transactions.unshift(`Deposited ₹${amount}`);
+        updateStorage();
+        document.getElementById('amount').value = '';
+      } else {
+        alert('Enter valid amount.');
+      }
+    }
+
+    function withdraw() {
+      const amount = parseFloat(document.getElementById('amount').value);
+      if (!currentUser) return alert('Select a user first.');
+      if (!isNaN(amount) && amount > 0) {
+        if (amount <= users[currentUser].balance) {
+          users[currentUser].balance -= amount;
+          users[currentUser].transactions.unshift(`Withdrew ₹${amount}`);
+          updateStorage();
+          document.getElementById('amount').value = '';
+        } else {
+          alert('Insufficient balance.');
+        }
+      } else {
+        alert('Enter valid amount.');
+      }
+    }
+
+    // Init
+    updateUserSelect();
+  </script>
+</body>
+</html>
